@@ -1,0 +1,39 @@
+&CONTROL
+  calculation = 'scf',
+  prefix = 'zrb2-60',
+  outdir = './tmp',
+  pseudo_dir = '/home/cganley2/qe-projects/common/pseudopotentials/SSSP_1.3.0_PBE_precision',
+  tprnfor = .true.,
+  tstress = .true.,
+/
+
+&SYSTEM
+  nosym = .true.,
+  ibrav = 4,
+  celldm(1) = 6.0093286437,
+  celldm(3) = 1.1147798742,
+  nat = 3,
+  ntyp = 2,
+  ecutwfc = 60,
+  ecutrho = 480,
+  occupations = 'smearing',
+  smearing = 'gaussian',
+  degauss = 0.01,
+/
+
+&ELECTRONS
+  conv_thr = 1.0d-8,
+  mixing_beta = 0.7,
+/
+
+ATOMIC_SPECIES
+Zr 91.224 Zr.pbe-spn-kjpaw_psl.1.0.0.UPF
+B  10.81 B.pbe-n-kjpaw_psl.1.0.0.UPF
+
+ATOMIC_POSITIONS crystal
+Zr 0.00000000  0.00000000  0.00000000
+B 0.66666667  0.33333333  0.50000000
+B 0.33333333  0.66666667  0.50000000
+
+K_POINTS automatic
+3 3 3 0 0 0

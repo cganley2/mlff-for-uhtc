@@ -1,0 +1,22 @@
+model: "MACE"
+num_channels: 128
+max_L: 1
+correlation: 3
+r_max: 5.0
+name: "zr-b-o"
+model_dir: "models"
+log_dir: "logs"
+checkpoints_dir: "checkpoints"
+results_dir: "results"
+train_file: "/home/cganley2/scitech2026/pre-training-data/aimd123_train_1200frames.extxyz"
+valid_file: "/home/cganley2/scitech2026/pre-training-data/aimd123_val_150frames.extxyz"
+test_file: "/home/cganley2/scitech2026/pre-training-data/aimd123_test_150frames.extxyz"
+energy_key: "energy"
+E0s: "{5: -149.3588435075547, 8: -560.1608247576469, 40: -4172.790832368914}"
+forces_key: "forces"
+patience: 5
+device: cpu
+batch_size: 20
+max_num_epochs: 1000
+swa: True
+seed: 123

@@ -1,0 +1,41 @@
+&CONTROL
+   calculation      = 'scf'
+   outdir           = './tmp'
+   pseudo_dir       = '/home/cganley2/qe-data/pseudopotentials/SSSP_1.3.0_PBE_precision'
+/
+&SYSTEM
+   ecutwfc          = 50
+   ecutrho          = 400
+   occupations      = 'smearing'
+   degauss = 0.01
+   ntyp             = 1
+   nat              = 1
+   ibrav            = 0
+/
+&ELECTRONS
+   electron_maxstep = 200
+   conv_thr         = 1e-07
+   mixing_mode      = 'local-TF'
+/
+&IONS
+   ion_dynamics     = 'bfgs'
+/
+&CELL
+/
+&FCP
+/
+&RISM
+/
+ATOMIC_SPECIES
+O 15.999 O.pbe-n-kjpaw_psl.0.1.UPF
+
+K_POINTS automatic
+1 1 1  0 0 0
+
+CELL_PARAMETERS angstrom
+12.72196143710328 0.00000000000000 0.00000000000000
+-6.36098071855164 11.01753665356737 0.00000000000000
+0.00000000000000 0.00000000000000 28.86371332811429
+
+ATOMIC_POSITIONS angstrom
+O 4.0000000000 4.0000000000 20.2751686049  
