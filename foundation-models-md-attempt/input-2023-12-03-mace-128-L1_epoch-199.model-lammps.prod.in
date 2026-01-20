@@ -1,0 +1,64 @@
+### INITIALIZE SYSTEM AND POTENTIAL
+units           metal
+dimension 3
+boundary p p f
+atom_style      atomic
+atom_modify map yes
+newton on
+read_data       zrb2-slab-144-atoms.data
+mass 1 91.22 # Zr
+mass 2 10.81 # B
+mass 3 16.00 # O
+
+pair_style      mace
+pair_coeff      * * /home/cganley2/scitech2026/mace-models/foundation-models/lammps-potentials/2023-12-03-mace-128-L1_epoch-199.model-lammps.pt Zr B O
+
+neighbor        2.0 bin
+neigh_modify    every 2 delay 0 check yes
+
+thermo_style custom step temp pe ke etotal press vol
+thermo 10
+###
+
+### GROUP ATOMS BY DESIGNATION
+group layer1 id 1:48 # bottom layer, fixed
+group layers2to4 id 49:96 # next few layers, thermostat
+group toplayers id 97:144 # top layers, free
+###
+
+### FREEZE CERTAIN LAYERS
+fix freeze_bottom layer1 setforce 0.0 0.0 0.0
+#fix freeze_toplayers toplayers setforce 0.0 0.0 0.0
+###
+
+### DISPLACE FROM EQUILIBRIUM POSITIONS
+displace_atoms all random 0.15 0.15 0.05 21344
+###
+
+### MINIMIZE ENERGY - DOES NOT YIELD PHYSICALLY REALISTIC SLAB
+#dump minimization_dump all custom 10 minimization_2023-12-03-mace-128-L1_epoch-199.model-lammps.dump id type x y z
+#dump_modify minimization_dump sort id
+#min_style cg
+# min_modify dmax 0.1
+#minimize 1.0e-4 1.0e-4 10000 100000
+#undump minimization_dump
+###
+
+### SET TIME STEPS
+timestep 0.0001      # TIME STEP 0.1fs
+reset_timestep 0
+###
+
+### INITIAL NVT SIMULATION TO TEMPERATURE EQUILIBRATE SLAB
+velocity        layers2to4 create 500 12345 mom yes rot yes dist gaussian
+velocity        toplayers create 500 12345 mom yes rot yes dist gaussian
+dump nvt_dump all custom 10 nvt_2023-12-03-mace-128-L1_epoch-199.model-lammps.dump id type x y z
+dump_modify nvt_dump sort id
+fix             1 layers2to4 nvt temp 1000 1000 $(10.0*dt)
+fix             2 toplayers nvt temp 1000 1000 $(10.0*dt)
+# fix 1 all nvt nvt temp 1000 1000 $(100.0*dt)
+run 10000
+unfix 1
+# unfix 2
+undump nvt_dump
+###

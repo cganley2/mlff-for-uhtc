@@ -1,0 +1,47 @@
+&CONTROL
+   calculation      = 'scf'
+   tstress          = .true.
+   tprnfor          = .true.
+   pseudo_dir       = '/home/cganley2/qe-data/pseudopotentials/SSSP_1.3.0_PBE_precision'
+/
+&SYSTEM
+   ecutwfc          = 50
+   ecutrho          = 400
+   occupations      = 'smearing'
+   degauss          = 0.01
+   smearing         = 'gaussian'
+   ntyp             = 2
+   nat              = 9
+   ibrav            = 0
+/
+&ELECTRONS
+   conv_thr         = 1e-07
+/
+&IONS
+/
+&CELL
+/
+
+ATOMIC_SPECIES
+Zr 91.224 Zr.pbe-spn-kjpaw_psl.1.0.0.UPF
+B 10.81 B.pbe-n-kjpaw_psl.1.0.0.UPF
+
+K_POINTS automatic
+2 2 1  0 0 0
+
+CELL_PARAMETERS angstrom
+3.18049049157012 0.00000000000000 0.00000000000000
+-1.59024524578506 2.75438427796201 0.00000000000000
+0.00000000000000 0.00000000000000 28.86371134822634
+
+ATOMIC_POSITIONS angstrom
+Zr 0.0003621335 0.0008955173 9.7619276172 
+B 1.5952008434 0.9134838318 11.5676564560 
+B -0.0140010930 1.8334167112 11.5581992289 
+Zr 0.0014056855 -0.0004125329 14.6531879159 
+B 1.5983951654 0.9275574259 15.5856337641 
+B -0.0017273144 1.8275966708 15.5854284662 
+Zr -0.0007287274 0.0001849970 17.4765217562 
+B 1.5859772363 0.9218483095 18.4498929634 
+B -0.0018780388 1.8336164343 18.4388665812 
+

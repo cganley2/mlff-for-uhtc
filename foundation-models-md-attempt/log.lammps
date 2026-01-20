@@ -1,0 +1,154 @@
+LAMMPS (29 Aug 2024)
+KOKKOS mode with Kokkos version 4.3.1 is enabled (src/KOKKOS/kokkos.cpp:72)
+  will use up to 1 GPU(s) per node
+  using 1 OpenMP thread(s) per MPI task
+package kokkos
+### INITIALIZE SYSTEM AND POTENTIAL
+units           metal
+dimension 3
+boundary p p f
+atom_style      atomic
+atom_modify map yes
+newton on
+read_data       zrb2-slab-144-atoms.data
+Reading data file ...
+  triclinic box = (0 0 20) to (12.650516 10.955668 88.911792) with tilt (-6.3252579 0 0)
+WARNING: Triclinic box skew is large. LAMMPS will run inefficiently. (src/domain.cpp:221)
+  1 by 1 by 1 MPI processor grid
+  reading atoms ...
+  144 atoms
+  read_data CPU = 0.008 seconds
+mass 1 91.22 # Zr
+mass 2 10.81 # B
+mass 3 16.00 # O
+
+pair_style      mace
+pair_coeff      * * /home/cganley2/scitech2026/mace-models/foundation-models/lammps-potentials/2023-12-03-mace-128-L1_epoch-199.model-lammps.pt Zr B O
+
+neighbor        2.0 bin
+neigh_modify    every 2 delay 0 check yes
+
+thermo_style custom step temp pe ke etotal press vol
+thermo 10
+###
+
+### GROUP ATOMS BY DESIGNATION
+group layer1 id 1:48 # bottom layer, fixed
+48 atoms in group layer1
+group layers2to4 id 49:96 # next few layers, thermostat
+48 atoms in group layers2to4
+group toplayers id 97:144 # top layers, free
+48 atoms in group toplayers
+###
+
+### FREEZE CERTAIN LAYERS
+fix freeze_bottom layer1 setforce 0.0 0.0 0.0
+#fix freeze_toplayers toplayers setforce 0.0 0.0 0.0
+###
+
+### DISPLACE FROM EQUILIBRIUM POSITIONS
+displace_atoms all random 0.15 0.15 0.05 21344
+Displacing atoms ...
+###
+
+### MINIMIZE ENERGY - DOES NOT YIELD PHYSICALLY REALISTIC SLAB
+#dump minimization_dump all custom 10 minimization_2023-12-03-mace-128-L1_epoch-199.model-lammps.dump id type x y z
+#dump_modify minimization_dump sort id
+#min_style cg
+# min_modify dmax 0.1
+#minimize 1.0e-4 1.0e-4 10000 100000
+#undump minimization_dump
+###
+
+### SET TIME STEPS
+timestep 0.0001      # TIME STEP 0.1fs
+reset_timestep 0
+###
+
+### INITIAL NVT SIMULATION TO TEMPERATURE EQUILIBRATE SLAB
+velocity        layers2to4 create 500 12345 mom yes rot yes dist gaussian
+velocity        toplayers create 500 12345 mom yes rot yes dist gaussian
+dump nvt_dump all custom 10 nvt_2023-12-03-mace-128-L1_epoch-199.model-lammps.dump id type x y z
+dump_modify nvt_dump sort id
+fix             1 layers2to4 nvt temp 1000 1000 $(10.0*dt)
+fix             1 layers2to4 nvt temp 1000 1000 0.0010000000000000000208
+fix             2 toplayers nvt temp 1000 1000 $(10.0*dt)
+fix             2 toplayers nvt temp 1000 1000 0.0010000000000000000208
+# fix 1 all nvt nvt temp 1000 1000 $(100.0*dt)
+run 10000
+
+CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE
+
+Your simulation uses code contributions which should be cited:
+
+- Type Label Framework: https://doi.org/10.1021/acs.jpcb.3c08419
+
+@Article{Gissinger24,
+ author = {Jacob R. Gissinger, Ilia Nikiforov, Yaser Afshar, Brendon Waters, Moon-ki Choi, Daniel S. Karls, Alexander Stukowski, Wonpil Im, Hendrik Heinz, Axel Kohlmeyer, and Ellad B. Tadmor},
+ title = {Type Label Framework for Bonded Force Fields in LAMMPS},
+ journal = {J. Phys. Chem. B},
+ year =    2024,
+ volume =  128,
+ number =  13,
+ pages =   {3282–-3297}
+}
+
+CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE
+
+Generated 0 of 3 mixed pair_coeff terms from geometric mixing rule
+Neighbor list info ...
+  update: every = 2 steps, delay = 0 steps, check = yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 14
+  ghost atom cutoff = 14
+  binsize = 14, bins = 2 1 5
+  1 neighbor lists, perpetual/occasional/extra = 1 0 0
+  (1) pair mace/kk, perpetual
+      attributes: full, newton on, ghost, kokkos_device
+      pair build: full/bin/ghost/kk/device
+      stencil: full/ghost/bin/3d
+      bin: kk/device
+Per MPI rank memory allocation (min/avg/max) = 3.448 | 3.448 | 3.448 Mbytes
+   Step          Temp          PotEng         KinEng         TotEng         Press          Volume    
+         0   328.67133      225.64838      6.0752268      231.72361      865939.63      9550.8195    
+        10   810.26979      219.43713      14.977189      234.41432      864088.72      9550.8195    
+        20   1414.6224      200.13812      26.148165      226.28628      852928.7       9550.8195    
+        30   1499.9055      175.49041      27.724554      203.21497      833114         9550.8195    
+        40   1345.341       151.74708      24.867554      176.61463      806697.31      9550.8195    
+        50   1170.7378      131.17978      21.640153      152.81993      774735.99      9550.8195    
+        60   1030.7551      113.92286      19.052684      132.97555      739480.79      9550.8195    
+        70   928.02686      99.552145      17.153835      116.70598      704288.56      9550.8195    
+        80   855.24968      87.570774      15.808607      103.37938      672002.14      9550.8195    
+        90   804.30633      77.488405      14.86696       92.355365      643968.32      9550.8195    
+       100   768.27468      68.840105      14.200943      83.041048      620138.51      9550.8195    
+       110   743.34652      61.213281      13.740166      74.953447      599695.04      9550.8195    
+       120   728.1273       54.271883      13.458851      67.730734      581581.66      9550.8195    
+       130   720.96691      47.760608      13.326497      61.087105      564799.18      9550.8195    
+       140   719.57834      41.483944      13.30083       54.784774      548553.29      9550.8195    
+       150   722.42007      35.273627      13.353358      48.626985      532288.81      9550.8195    
+       160   729.64716      28.951896      13.486945      42.43884       515673.53      9550.8195    
+       170   742.67941      22.304862      13.727835      36.032697      498727.92      9550.8195    
+       180   762.66575      15.094269      14.097267      29.191536      482188.87      9550.8195    
+       190   789.72217      7.1102392      14.597383      21.707622      467665.65      9550.8195    
+       200   823.55653     -1.7475417      15.222784      13.475242      455162.53      9550.8195    
+       210   875.7235      -11.751627      16.187049      4.4354216      438426.75      9550.8195    
+       220   948.18563     -23.603819      17.526454     -6.0773658      414716.95      9550.8195    
+       230   1008.5225     -37.482954      18.641732     -18.841223      387715.49      9550.8195    
+       240   1070.6249     -53.778995      19.789646     -33.989349      361020.75      9550.8195    
+       250   1047.2164     -70.058115      19.356958     -50.701157      345998.88      9550.8195    
+       260   995.90222     -84.742656      18.408457     -66.334199      324942.65      9550.8195    
+       270   1027.0206     -100.85282      18.983654     -81.869164      297888.16      9550.8195    
+       280   1065.7498     -118.60757      19.699533     -98.908034      270544.92      9550.8195    
+       290   1088.6242     -137.16529      20.122349     -117.04294      245189.69      9550.8195    
+       300   1128.8526     -157.15484      20.865939     -136.28891      215487.08      9550.8195    
+       310   1171.5333     -178.81375      21.654857     -157.1589       180859.06      9550.8195    
+       320   1236.8597     -202.82666      22.862363     -179.9643       142797.21      9550.8195    
+       330   1294.8927     -229.60679      23.935057     -205.67173      107748.94      9550.8195    
+       340   1361.9417     -259.11067      25.174403     -233.93627      71068.053      9550.8195    
+       350   1605.6985     -297.3707       29.680053     -267.69065      21293.505      9550.8195    
+       360   2102.7648     -356.37161      38.867926     -317.50369     -61068.54       9550.8195    
+       370   2879.2821     -452.02392      53.221229     -398.80269     -198386.48      9550.8195    
+       380   6250.5085     -705.50024      115.53565     -589.96459     -472396.67      9550.8195    
+       390   3968.4987     -1095.0603      73.354527     -1021.7057     -794145.13      9550.8195    
+       400   3920.075      -1333.7483      72.459454     -1261.2888     -1054119.5      9550.8195    
+       410   5892.2764     -1664.8253      108.91402     -1555.9113     -1435819.6      9550.8195 

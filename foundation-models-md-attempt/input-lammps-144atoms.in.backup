@@ -1,0 +1,128 @@
+### INITIALIZE SYSTEM AND POTENTIAL
+units           metal
+dimension 3
+boundary p p f
+atom_style      atomic
+atom_modify map yes
+newton on
+read_data       zrb2-slab-144-atoms.data
+mass 1 91.22 # Zr
+mass 2 10.81 # B
+mass 3 16.00 # O
+
+pair_style      mace
+pair_coeff      * * /home/cganley2/scitech2026/mace-models/foundation-models/lammps-potentials/mace-mh-0.model-lammps.pt Zr B O
+#pair_coeff      * * lj/cut 1000.0 0.2
+
+neighbor        2.0 bin
+neigh_modify    every 2 delay 0 check yes
+
+thermo_style custom step temp pe ke etotal press vol
+thermo 10
+###
+
+### GROUP ATOMS BY DESIGNATION
+group layer1 id 1:48 # bottom layer, fixed
+group layers2to4 id 49:96 # next few layers, thermostat
+group toplayers id 97:144 # top layers, free
+###
+
+fix freeze_bottom layer1 setforce 0.0 0.0 0.0
+#fix freeze_toplayers toplayers setforce 0.0 0.0 0.0
+displace_atoms all random 0.25 0.25 0.05 21344
+
+### MINIMIZE ENERGY
+#dump minimization_dump all custom 10 minimization.dump id type x y z
+#dump_modify minimization_dump sort id
+#min_style cg
+# min_modify dmax 0.1
+#minimize 1.0e-25 1.0e-25 10000 100000
+#undump minimization_dump
+###
+
+### SET TIME STEPS
+timestep 0.0001      # NEED TO DECIDE ON TIME STEP
+reset_timestep 0
+###
+
+### INITIAL NVT SIMULATION TO TEMPERATURE EQUILIBRATE SLAB
+velocity        layers2to4 create 1000 12345 mom yes rot yes dist gaussian
+dump nvt_dump all custom 10 nvt.dump id type x y z
+dump_modify nvt_dump sort id
+fix             1 layers2to4 nvt temp 1000 1000 $(100.0*dt)
+# fix             2 toplayers nvt temp 1000 1000 $(100.0*dt)
+# fix 1 all nvt nvt temp 1000 1000 $(100.0*dt)
+run 10000
+unfix 1
+unfix 2
+undump nvt_dump
+###
+
+### DEFINE NEW DUMP
+dump impact_dump all custom 500 nve.dump id type x y z
+dump_modify impact_dump sort id
+###
+
+
+### LOOP TO CREATE IMPACTING ATOMS AND SEND THEM DOWNWARD IN Z
+# BEGIN LOOP
+variable nO loop 10
+label loop_O
+
+### DEFINE REGION IN WHICH MSD CALCULATION IS RELEVANT (WITHIN SLAB)
+region within_slab block 0.0 25.3 0.0 21.9 10.0 39.0
+group within_slab_group region within_slab
+###
+
+### PLACE A NEW ATOM AT A RANDOM (X, Y, 50) POSITION - THIS IS ABOVE THE SLAB
+variable x_coord equal "random(0, 25, 42)"
+variable y_coord equal "random(0, 21, 12345)"
+print "Placing new atom at ${x_coord} ${y_coord}"
+create_atoms 3 single ${x_coord} ${y_coord} 50 units box
+compute cid all property/atom id
+compute maxid all reduce max c_cid
+run 0
+variable maxid equal c_maxid
+group maxatom id ${maxid}
+print "Max atom ID = ${maxid}"
+###
+
+### FIND WHICH NEWLY ADDED ATOMS ARE WITHIN THE RELEVENT COMPUTE MSD REGION
+group impact_species type 3 # this will change to type 3
+group impact_species_within_slab intersect within_slab_group impact_species
+compute impact_species_msd impact_species_within_slab msd
+###
+
+### FIX THE MIDDLE LAYERS WITH NVT, USE NVE FOR TOP LAYERS
+fix 3 layers2to4 nvt temp 1000 1000 $(100.0*dt)
+fix 4 toplayers nve
+###
+
+### GIVE NEWLY ADDED ATOM -Z VELOCITY, RUN 4000 STEPS
+velocity maxatom set 0.0 0.0 -8.0 units box
+run 4000
+unfix 3
+unfix 4
+###
+
+### ASSUME ATOM HAS "IMPACTED" SURFACE, SO RUN NVT ON ALL AND CALCULATE MSD
+fix 5 all nvt temp 1000 1000 $(100.0*dt)
+thermo_style custom step temp pe ke etotal c_impact_species_msd[4]
+thermo 500
+run 3000
+###
+
+### RESETTING GROUPS AND COMPUTES FOR NEXT ITERATION OF LOOP
+unfix 5
+uncompute cid
+uncompute maxid
+uncompute impact_species_msd
+group maxatom delete
+group within_slab_group delete
+region within_slab delete
+thermo_style custom step temp pe ke etotal press vol
+thermo 1000
+next nO
+jump SELF loop_O
+###
+# END LOOP

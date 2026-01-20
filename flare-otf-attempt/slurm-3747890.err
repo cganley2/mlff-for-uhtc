@@ -1,0 +1,5 @@
+Resetting modules to system default. Reseting $MODULEPATH back to system default. All extra directories will be removed from $MODULEPATH.
+Traceback (most recent call last):
+  File "/scratch/cganley2/zrb2-slab-otf/sandbox-script-otf.py", line 15, in <module>
+    from flare.bffs.sgp import SGP_Wrapper
+ModuleNotFoundError: No module named 'flare'
